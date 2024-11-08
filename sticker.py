@@ -1,59 +1,50 @@
 import streamlit as st
-from PIL import Image, ImageOps
+from rembg import remove
+from PIL import Image
+import numpy as np
 import io
 
-def create_sticker(image, size=(512, 512), border_size=10):
-    """
-    Generates a sticker from a given image with a specified size and optional border.
+# Streamlit app UI
+st.title("Sticker Maker with Background Removal")
+st.write("Upload an image, and this app will remove the background to create a sticker.")
 
-    Parameters:
-    - image (PIL Image): The input image.
-    - size (tuple): The target size of the sticker.
-    - border_size (int): Thickness of the border (optional).
-    
-    Returns:
-    - PIL Image: The sticker image.
-    """
-    # Convert image to RGBA (supports transparency)
-    img = image.convert("RGBA")
-    
-    # Make the image square by padding it with transparent borders if needed
-    img = ImageOps.pad(img, size, color=(255, 255, 255, 0))  # Transparent background
-    
-    # Optionally, add a white border to the image
-    if border_size > 0:
-        img = ImageOps.expand(img, border=border_size, fill=(255, 255, 255, 255))
-    
-    return img
+# File uploader for image input
+uploaded_file = st.file_uploader("Choose an image file", type=["jpg", "jpeg", "png"])
 
-# Streamlit UI
-st.title("Sticker Generator")
-
-# Image upload
-uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
-
-# Sticker settings
-sticker_size = st.slider("Sticker Size", min_value=128, max_value=1024, value=512, step=64)
-border_size = st.slider("Border Size", min_value=0, max_value=50, value=10)
-
+# Check if an image is uploaded
 if uploaded_file is not None:
-    # Load the image
-    image = Image.open(uploaded_file)
-    
-    # Generate the sticker
-    sticker = create_sticker(image, size=(sticker_size, sticker_size), border_size=border_size)
-    
-    # Display the result
-    st.image(sticker, caption="Generated Sticker", use_column_width=True)
-    
-    # Download button
-    img_byte_arr = io.BytesIO()
-    sticker.save(img_byte_arr, format='PNG')
-    img_byte_arr = img_byte_arr.getvalue()
-    
-    st.download_button(
-        label="Download Sticker",
-        data=img_byte_arr,
-        file_name="sticker.png",
-        mime="image/png"
-    )
+    # Open the image file
+    input_image = Image.open(uploaded_file)
+
+    # Display the original image
+    st.image(input_image, caption="Original Image", use_column_width=True)
+
+    # Remove background
+    with st.spinner("Removing background..."):
+        # Convert image to binary for processing
+        input_bytes = io.BytesIO()
+        input_image.save(input_bytes, format="PNG")
+        input_bytes = input_bytes.getvalue()
+
+        # Remove background
+        output_bytes = remove(input_bytes)
+
+        # Load the result as an image with transparency
+        output_image = Image.open(io.BytesIO(output_bytes))
+
+        # Resize to a standard sticker size (optional)
+        sticker_size = (512, 512)
+        output_image = output_image.resize(sticker_size, Image.ANTIALIAS)
+
+        # Display the sticker
+        st.image(output_image, caption="Sticker with Transparent Background", use_column_width=True)
+
+        # Download option for the sticker
+        st.download_button(
+            label="Download Sticker",
+            data=output_bytes,
+            file_name="sticker.png",
+            mime="image/png"
+        )
+else:
+    st.warning("Please upload an image file to proceed.")
