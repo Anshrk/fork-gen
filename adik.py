@@ -1,97 +1,82 @@
-import cv2
-from pytube import YouTube
-import speech_recognition as sr
-from transformers import pipeline
+import streamlit as st
+import re
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 from PIL import Image, ImageDraw, ImageFont
-import tempfile
-import os
+import random
+import requests
+from io import BytesIO
 
-# Function to download YouTube video and return the video path
-def download_youtube_video(url):
-    yt = YouTube(url)
-    stream = yt.streams.filter(file_extension="mp4", res="360p").first()
-    video_path = stream.download(filename="temp_video.mp4")
-    return video_path
-
-# Function to extract audio and perform speech-to-text
-def get_video_transcript(video_path):
-    recognizer = sr.Recognizer()
-    temp_audio_path = "temp_audio.wav"
-
-    # Extract audio from video
-    os.system(f"ffmpeg -i {video_path} -ab 160k -ac 2 -ar 44100 -vn {temp_audio_path}")
+# DALL-E or similar image generation function (mocked here for example)
+def generate_image_from_keywords(keywords):
+    # Example: send a request to an image generation API with keywords
+    prompt = " ".join(keywords)
     
-    # Convert audio to text
-    with sr.AudioFile(temp_audio_path) as source:
-        audio_data = recognizer.record(source)
-        transcript = recognizer.recognize_google(audio_data)
+    # Mockup for DALL-E style image generation
+    # Replace with actual API calls as needed
+    url = f"https://dummyimage.com/600x400/000/fff.png&text={'+'.join(keywords)}"
+    response = requests.get(url)
     
-    os.remove(temp_audio_path)
-    return transcript
-
-# Function to extract frames and match to transcript
-def find_best_frame(video_path, transcript, title):
-    # Initialize OpenCV to capture frames from the video
-    cap = cv2.VideoCapture(video_path)
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    
-    # Initialize NLP model for semantic similarity
-    similarity_model = pipeline("zero-shot-classification")
-
-    best_frame = None
-    highest_score = 0
-
-    # Loop through frames at intervals (e.g., every 5 seconds)
-    for i in range(0, frame_count, fps * 5):
-        cap.set(cv2.CAP_PROP_POS_FRAMES, i)
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        # Check if this part of the transcript matches the title best
-        segment = transcript[i:i+300]  # Use a segment of the transcript for matching
-        result = similarity_model(segment, candidate_labels=[title])
-        score = result["scores"][0]
-
-        # Keep track of the best-matching frame
-        if score > highest_score:
-            highest_score = score
-            best_frame = frame
-
-    cap.release()
-    return best_frame
-
-# Function to save the thumbnail with title overlay
-def save_thumbnail_with_text(frame, title, output_path="thumbnail.jpg"):
-    image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-    draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype("arial.ttf", 40)
-    
-    # Position the text
-    text_width, text_height = draw.textsize(title, font=font)
-    width, height = image.size
-    text_position = ((width - text_width) // 2, height - text_height - 20)
-    
-    # Draw text on image
-    draw.text(text_position, title, font=font, fill="yellow")
-    image.save(output_path)
-    print(f"Thumbnail saved as {output_path}")
-
-# Main function to put it all together
-def generate_youtube_thumbnail(video_url, title):
-    video_path = download_youtube_video(video_url)
-    transcript = get_video_transcript(video_path)
-    best_frame = find_best_frame(video_path, transcript, title)
-    
-    if best_frame is not None:
-        save_thumbnail_with_text(best_frame, title)
+    if response.status_code == 200:
+        return Image.open(BytesIO(response.content))
     else:
-        print("No suitable frame found.")
-    
-    os.remove(video_path)  # Cleanup downloaded video
+        return None
 
-# Example usage
-video_url = "https://www.youtube.com/watch?v=aw-XYrMFb0A"
-title = "How Mozilla lost the Internet (& what's next)"
-generate_youtube_thumbnail(video_url, title)
+# Extract keywords from title and description
+def extract_keywords(title, description):
+    text = title + " " + description
+    text = re.sub(r'[^a-zA-Z\s]', '', text.lower())
+    words = word_tokenize(text)
+    stop_words = set(stopwords.words("english"))
+    keywords = [word for word in words if word not in stop_words and len(word) > 2]
+    return list(set(keywords))
+
+# Overlay title text on image
+def add_text_to_image(image, text, output_path="thumbnail.jpg"):
+    draw = ImageDraw.Draw(image)
+    font_size = int(image.width * 0.1)
+    
+    try:
+        font = ImageFont.truetype("arial.ttf", font_size)
+    except IOError:
+        font = ImageFont.load_default()
+        
+    # Text position and color
+    text_position = (10, 10)
+    text_color = "white"
+
+    # Draw text with shadow for better contrast
+    shadow_offset = (2, 2)
+    shadow_color = "black"
+    
+    # Shadow text
+    draw.text((text_position[0] + shadow_offset[0], text_position[1] + shadow_offset[1]), text, font=font, fill=shadow_color)
+    # Main text
+    draw.text(text_position, text, font=font, fill=text_color)
+    
+    image.save(output_path)
+    return image
+
+# Streamlit UI for video thumbnail generation
+st.title("Random Thumbnail Generator for Video")
+
+title = st.text_input("Enter Video Title")
+description = st.text_area("Enter Video Description")
+
+if st.button("Generate Thumbnail"):
+    if title and description:
+        # Step 1: Extract Keywords
+        keywords = extract_keywords(title, description)
+        st.write("Extracted Keywords:", keywords)
+        
+        # Step 2: Generate Image based on Keywords
+        image = generate_image_from_keywords(keywords)
+        
+        if image:
+            # Step 3: Overlay Title on Thumbnail
+            thumbnail = add_text_to_image(image, title)
+            st.image(thumbnail, caption="Generated Thumbnail", use_column_width=True)
+        else:
+            st.write("Error: Could not generate thumbnail image.")
+    else:
+        st.write("Please enter both title and description.")
