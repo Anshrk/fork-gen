@@ -1,0 +1,46 @@
+/* style.css */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+    background-color: #ffffff;
+    color: #14171A;
+    font-family: 'Roboto', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #1DA1F2;
+}
+
+.sidebar .sidebar-content {
+    background-color: #1DA1F2;
+    color: white;
+}
+
+.stButton>button {
+    background-color: #1DA1F2;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 700;
+}
+
+.stTextInput>div>div>input {
+    background-color: #E1E8ED;
+    color: #14171A;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-family: 'Roboto', sans-serif;
+}
+
+.stFileUploader>label {
+    color: #1DA1F2;
+    font-family: 'Roboto', sans-serif;
+}
+
+a {
+    color: #1DA1F2;
+    text-decoration: none;
+}

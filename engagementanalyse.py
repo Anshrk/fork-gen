@@ -10,7 +10,7 @@ from PIL import Image
 
 # Load environment variables
 load_dotenv()
-YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
+YOUTUBE_API_KEY = os.getenv('YT_DATA_API_KEY')
 
 # Function to get video statistics
 def get_video_data(video_url):
