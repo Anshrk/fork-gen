@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Text Overlay and Autobranding</title>
+    <style>
+        canvas {
+            border: 1px solid black; /* Optional: to show the canvas boundary */
+        }
+    </style>
+</head>
+<body>
+    <!-- Create the canvas element -->
+    <canvas id="myCanvas" width="600" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById("myCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Set the background color (optional)
+        ctx.fillStyle = "#f2f2f2";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Add custom text overlay
+        ctx.font = "30px Arial"; // Text font size and style
+        ctx.fillStyle = "black"; // Text color
+        ctx.fillText("Today is Thursday, November 7, 2024", 50, 100); // Updated text overlay
+
+        // Add branding text (e.g., company name)
+        ctx.font = "24px Arial";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; // Semi-transparent black text for branding
+        ctx.fillText("Your Brand Name", 50, canvas.height - 50); // Positioned at the bottom
+
+        // Add a logo for autobranding (e.g., a small image in the bottom right corner)
+        const logo = new Image(); // Create an image element
+        logo.src = 'https://logos-world.net/wp-content/uploads/2020/04/McDonalds-Logo-1975-present.png'; // Replace with the URL of your brand logo
+
+        // When the logo image is loaded, draw it on the canvas
+        logo.onload = function() {
+            // Set logo position
+            const logoX = canvas.width - logo.width - 20; // 20px margin from the right
+            const logoY = canvas.height - logo.height - 20; // 20px margin from the bottom
+            ctx.drawImage(logo, logoX, logoY); // Draw the logo on the canvas
+        };
+    </script>
+</body>
+</html>
