@@ -62,7 +62,7 @@ def find_best_frame(video_path, transcript, title):
     cap.release()
     return best_frame
 
-# Function to save the thumbnail with title overlay
+# Function to save the thumbnail with title overlay as JPEG
 def save_thumbnail_with_text(frame, title, output_path="thumbnail.jpg"):
     image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     draw = ImageDraw.Draw(image)
@@ -75,7 +75,10 @@ def save_thumbnail_with_text(frame, title, output_path="thumbnail.jpg"):
     
     # Draw text on image
     draw.text(text_position, title, font=font, fill="yellow")
-    image.save(output_path)
+    
+    # Convert image to RGB and save as JPEG
+    rgb_image = image.convert("RGB")
+    rgb_image.save(output_path, "JPEG")
     print(f"Thumbnail saved as {output_path}")
 
 # Main function to put it all together
