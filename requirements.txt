@@ -28,7 +28,7 @@ huggingface-hub==0.26.2
 idna==3.10
 imageio==2.36.0
 imageio-ffmpeg==0.5.1
-Jinja2==3.1.4
+Jinja2==3.1.5
 jiter==0.7.0
 joblib==1.4.2
 jsonschema==4.23.0
